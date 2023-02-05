@@ -1,8 +1,8 @@
 PORTLESS_URL = `${process.env.APP_URL}`
 PORT = process.env.PORT || 3001,
 
-AUTH = "auth"
-ACCOUNT_VERIFY = "account_verify"
+AUTH = process.env.AUTH_TABLE_NAME
+ACCOUNT_VERIFY = process.env.ACCOUNT_VERIFY_TABLE_NAME
 
 module.exports = {
     PORT: PORT,
