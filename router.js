@@ -4,6 +4,7 @@ const authHandler = require("./handlers/auth")
 
 router.post("/login", authHandler.login)
 router.post("/signup", authHandler.signup)
+router.get("/verify_account/:id/:code", authHandler.verifyAccount)
 
 
 router.get("/", (req, res) => res.type('html').send(html));

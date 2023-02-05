@@ -32,6 +32,7 @@ const login = async (request, response) => {
         const row = await authService.verifyPassword(email, password);
         if (row != null) {
             const id = row.id
+            console.log(row)
             return response.json({
                 token: jwt.sign({ user: id }, JWT_SECRET)
             })
@@ -44,6 +45,21 @@ const login = async (request, response) => {
     }
 }
 
+const verifyAccount = async (request, response) => {
+    try {
+        const { id, code } = request.params;
+        console.log(`${id} is attempting to verify their credentials.`)
+
+        await authService.accountVerification(id, code)
+        return response.json({
+            message: "YOU HAVE BEEN VERIFIED!!!"
+        })
+    } catch (err) {
+        console.error(err)
+        return response.status(401).json({ message: err.message })
+    }
+}
+
 module.exports = {
-    signup, login
+    signup, login, verifyAccount
 }
