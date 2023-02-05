@@ -33,6 +33,26 @@ const is_verified = async (id) => {
     }
 }
 
+const verify_request = async (request) => {
+    const authorizationHeader = request.header("authorization")
+    if (!authorizationHeader) {
+        throw new Error("No Authorization Header Found")
+    }
+
+    const lineSplit = authorizationHeader.split(' ')
+    const bearer = lineSplit[0]
+    if (bearer != "Bearer") {
+        throw new Error("Expected the authorization header to have 'Bearer'")
+    }
+    const token = lineSplit[1]
+    const decoded_token = decode_token(token)
+    const id = decoded_token.id
+    if (!(await is_verified(id))) {
+        throw new Error("This request was unabled to be processed, because you were not verified.")
+    }
+    return decoded_token
+}
+
 module.exports = {
-    decode_token, is_verified
+    decode_token, is_verified, verify_request
 }

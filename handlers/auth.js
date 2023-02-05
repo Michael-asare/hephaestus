@@ -4,6 +4,13 @@ const jwt = require("jsonwebtoken")
 
 const JWT_SECRET = config.JWT_SECRET
 
+const payload_creator = (id, email) => {
+    return {
+        id: id,
+        email: email,
+    }
+}
+
 const signup = async (request, response) => {
     try {
         const { email, password } = request.body;
@@ -13,7 +20,7 @@ const signup = async (request, response) => {
         if (row != null) {
             const id = row.id
             return response.json({
-                token: jwt.sign({ user: id }, JWT_SECRET)
+                token: jwt.sign(payload_creator(id, email), JWT_SECRET)
             })
         }
 
@@ -34,7 +41,7 @@ const login = async (request, response) => {
             const id = row.id
             console.log(row)
             return response.json({
-                token: jwt.sign({ user: id }, JWT_SECRET)
+                token: jwt.sign(payload_creator(id, email), JWT_SECRET)
             })
         }
 

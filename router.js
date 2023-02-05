@@ -1,10 +1,14 @@
 const Router = require('express')
 const router = Router()
 const authHandler = require("./handlers/auth")
+const resetPasswordHandler = require("./handlers/reset_password")
 
 router.post("/login", authHandler.login)
 router.post("/signup", authHandler.signup)
 router.get("/verify_account/:id/:code", authHandler.verifyAccount)
+router.post("/forget_password", resetPasswordHandler.request_password_reset)
+router.post("/reset_password/:token", resetPasswordHandler.update_after_reset_password)
+router.post("/update_password", resetPasswordHandler.update_password_after_sign_in)
 
 
 router.get("/", (req, res) => res.type('html').send(html));

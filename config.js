@@ -1,8 +1,9 @@
-PORTLESS_URL = `${process.env.APP_URL}`
-PORT = process.env.PORT || 3001,
+const PORTLESS_URL = `${process.env.APP_URL}`
+const PORT = process.env.PORT || 3001
 
-AUTH = process.env.AUTH_TABLE_NAME
-ACCOUNT_VERIFY = process.env.ACCOUNT_VERIFY_TABLE_NAME
+const AUTH = process.env.AUTH_TABLE_NAME
+const ACCOUNT_VERIFY = process.env.ACCOUNT_VERIFY_TABLE_NAME
+const PASSWORD_RESET = process.env.PASSWORD_RESET
 
 module.exports = {
     PORT: PORT,
@@ -26,11 +27,23 @@ module.exports = {
                 code text NOT NULL,
                 entry_timestamp timestamptz NOT NULL DEFAULT now()
             )`
+        },
+        PASSWORD_RESET: {
+            name: PASSWORD_RESET,
+            creation: `CREATE TABLE IF NOT EXISTS ${PASSWORD_RESET} (
+                email text NOT NULL,
+                hashed_code text NOT NULL,
+                entry_timestamp timestamptz NOT NULL DEFAULT now()
+            )`
         }
     },
     VERIFY_TOKEN_EXPIRE: {
         amount: 1,
         unit: "day"
+    },
+    PASSWORD_RESET_TOKEN_EXPIRE: {
+        amount: 1,
+        unit: "hour"
     },
     EMAIL: {
         user: `${process.env.EMAIL_USER}`,

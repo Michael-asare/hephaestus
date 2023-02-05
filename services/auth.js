@@ -2,6 +2,7 @@ const pool = require("../db")
 const helper = require("./helper")
 const config = require("../config")
 const cryptoHelper = require("./crypto_helper")
+const verifyService = require("./verify")
 const moment = require("moment")
 
 const AUTH_TABLE_NAME = config.TABLE.AUTH.name;
@@ -16,18 +17,6 @@ const throw_error_if_email_exists = async (email) => {
         if (rows.rowCount >= 1) {
             throw new Error(`An account with ${email} already exists`)
         }
-    } catch (err) {
-        throw err
-    }
-}
-
-const get_auth_info_by_id = async (id) => {
-    try { 
-        const result = await pool.query(`SELECT email FROM ${AUTH_TABLE_NAME} WHERE id = $1`, [id])
-        if (result.rowCount < 1) {
-            throw new Error(`No accounts were found with id ${id}`)
-        }
-        return result.rows[0]
     } catch (err) {
         throw err
     }
@@ -54,9 +43,7 @@ const create_auth_table = async () => {
 const signup = async (email, password) => {
     await create_auth_table()
 
-    let salt = cryptoHelper.generate_salt()
-
-    let hashedPassword = await cryptoHelper.wrapped_pbkdf2(password, salt)
+    let [hashedPassword, salt] = await cryptoHelper.create_hashed_password(password)
 
     await helper.delete_all_rows(ACCOUNT_VERIFY_TABLE_NAME)
     await helper.delete_all_rows(AUTH_TABLE_NAME)
@@ -124,13 +111,20 @@ const verifyPassword = async (email, password) => {
 const accountVerification = async (accountId, verificationCode) => {
     await create_account_verify_table()
 
-    let row;
-    try {
-        const result = await pool.query(`SELECT * FROM ${ACCOUNT_VERIFY_TABLE_NAME} WHERE id = $1 AND code = $2`, [accountId, verificationCode])
-        row = result.rows[0]
-    } catch (err) {
-        throw err;
+    if (!accountId) {
+        throw new Error("There was no account id given to verify")
     }
+
+    if (!verificationCode) {
+        throw new Error("There was no verficiation code given to verify")
+    }
+
+    const is_already_verified = await verifyService.is_verified(accountId)
+    if (is_already_verified) {
+        throw new Error("Already verified.")
+    }
+    const result = await pool.query(`SELECT * FROM ${ACCOUNT_VERIFY_TABLE_NAME} WHERE id = $1 AND code = $2`, [accountId, verificationCode])
+    const row = result.rows[0]
 
     if (row == null || row == undefined) {
         throw new Error("Could not find an account with a living verifcation code with that id. That code may be expired or wrong.");
