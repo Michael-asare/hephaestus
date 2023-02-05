@@ -21,6 +21,18 @@ const throw_error_if_email_exists = async (email) => {
     }
 }
 
+const get_auth_info_by_id = async (id) => {
+    try { 
+        const result = await pool.query(`SELECT email FROM ${AUTH_TABLE_NAME} WHERE id = $1`, [id])
+        if (result.rowCount < 1) {
+            throw new Error(`No accounts were found with id ${id}`)
+        }
+        return result.rows[0]
+    } catch (err) {
+        throw err
+    }
+}
+
 const create_account_verify_table = async () => {
     await helper.create_table_if_not_exists(ACCOUNT_VERIFY_TABLE_CREATION)
 }
@@ -67,10 +79,16 @@ const signup = async (email, password) => {
     const verify_code_result = await generate_verify_code(id)
     const code = verify_code_result.rows[0].code
 
+    
     console.log("This is your ID")
     console.log(id)
     console.log("This is your code")
     console.log(code)
+
+    const verificationLink = `${config.BASE_URL}/verify_account/${id}/${code}`
+    const emailInfo = await helper.send_email(email, "Verify Your Acccount w/ FantasyFiends & TMS!", `Here is your link: ${verificationLink}`, `<p>${verificationLink}</p>`)
+    console.log("This is the email info")
+    console.log(emailInfo)
 
     return newUserRow;
 }
@@ -118,12 +136,8 @@ const accountVerification = async (accountId, verificationCode) => {
         throw new Error("Could not find an account with a living verifcation code with that id. That code may be expired or wrong.");
     }
 
-    console.log(row.entry_timestamp)
     entry_moment = moment(row.entry_timestamp)
     expire_moment = moment(row.entry_timestamp).add(config.VERIFY_TOKEN_EXPIRE.amount, config.VERIFY_TOKEN_EXPIRE.unit)
-    console.log(entry_moment)
-    console.log(expire_moment)
-    console.log(moment())
     if (!moment().isBetween(entry_moment, expire_moment, undefined, "[]")) {
         await pool.query(`DELETE FROM ${ACCOUNT_VERIFY_TABLE_NAME} WHERE id = $1 AND entry_timestamp < now()`, [accountId])
         throw new Error("The verification code expired")

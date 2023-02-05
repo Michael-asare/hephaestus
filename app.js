@@ -1,3 +1,4 @@
+require("dotenv").config()
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3001;
@@ -11,4 +12,4 @@ app.use(upload.array())
 app.use(express.static('public'))
 app.use('/', baseRouter)
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+app.listen(port, () => console.log(`Omphalos backend listening on port ${port}!`));

@@ -1,7 +1,12 @@
+PORTLESS_URL = `${process.env.APP_URL}`
+PORT = process.env.PORT || 3001,
+
 AUTH = "auth"
 ACCOUNT_VERIFY = "account_verify"
 
 module.exports = {
+    PORT: PORT,
+    BASE_URL: `${PORTLESS_URL}:${PORT}`,
     CONNECTION_STRING: `${process.env.DATABASE_URL}`,
     JWT_SECRET: `${process.env.JWT_SECRET}`,
     TABLE: {
@@ -26,5 +31,9 @@ module.exports = {
     VERIFY_TOKEN_EXPIRE: {
         amount: 1,
         unit: "day"
+    },
+    EMAIL: {
+        user: `${process.env.EMAIL_USER}`,
+        password: `${process.env.EMAIL_PASSWORD}`,
     }
 }
