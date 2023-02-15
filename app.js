@@ -10,6 +10,10 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(upload.array())
 app.use(express.static('public'))
-app.use('/', baseRouter)
-
-app.listen(port, () => console.log(`Omphalos backend listening on port ${port}!`));
+require("./setup/init")().then(() => {
+  app.use('/', baseRouter)
+  
+  app.listen(port, () => console.log(`Omphalos backend listening on port ${port}!`));
+}).catch((reason) => {
+  console.error(reason)
+})

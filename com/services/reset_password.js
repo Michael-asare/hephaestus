@@ -1,28 +1,23 @@
-const pool = require("../db")
+const pool = require("../../setup/db")
 const helper = require("./helper")
-const config = require("../config")
+const config = require("../../setup/config")
 const cryptoHelper = require("./crypto_helper")
 const moment = require("moment")
+const { UnassociatedEmailError, ResetTokenDoesNotExistError, ResetTokenExpiredError } = require("../errors/reset-password-errors")
+const { RowUndefinedError } = require("../errors/errors")
 
 const AUTH_TABLE_NAME = config.TABLE.AUTH.name;
 
 const PASSWORD_RESET_TABLE_NAME = config.TABLE.PASSWORD_RESET.name;
-const PASSWORD_RESET_TABLE_CREATION = config.TABLE.PASSWORD_RESET.creation;
-
-const create_password_reset_table = async () => {
-    await helper.create_table_if_not_exists(PASSWORD_RESET_TABLE_CREATION)
-}
 
 const send_password_reset_link = async (email) => {
-    await create_password_reset_table()
-
     const random_string = cryptoHelper.generate_bytes(32)
     const hashed_random_string = cryptoHelper.generate_hash(random_string)
     let id
     try {
         const results = await pool.query(`SELECT id FROM ${AUTH_TABLE_NAME} WHERE email = $1`, [email])
         if (results.rowCount < 1) {
-            throw new Error("This Email actually isn't associated with any account. Don't tell them that tho!")
+            throw new UnassociatedEmailError(email)
         }
         id = results.rows[0].id
     } catch (err) {
@@ -55,14 +50,12 @@ const update_password_by_id = async (id, newPassword) => {
 
 
 const update_password_with_reset_token = async (newPassword, token) => {
-    await create_password_reset_table()
-
     const hashed_token = cryptoHelper.generate_hash(token)
     let row
     try {
         const results = await pool.query(`SELECT * FROM ${PASSWORD_RESET_TABLE_NAME} WHERE hashed_code = $1`, [hashed_token])
         if (results.rowCount < 1) {
-            throw new Error("This token was not found within the database after hashed. Could mean that this is expired.")
+            throw ResetTokenDoesNotExistError(token)
         }
         row = results.rows[0]
     } catch (err) {
@@ -70,7 +63,7 @@ const update_password_with_reset_token = async (newPassword, token) => {
     }
 
     if (!row) {
-        throw new Error("When attempting to update password, the row was not found to update")
+        throw new RowUndefinedError("update_password_with_reset_token")
     }
 
     const email = row.email
@@ -78,7 +71,7 @@ const update_password_with_reset_token = async (newPassword, token) => {
     expire_moment = moment(row.entry_timestamp).add(config.VERIFY_TOKEN_EXPIRE.amount, config.VERIFY_TOKEN_EXPIRE.unit)
     if (!moment().isBetween(entry_moment, expire_moment, undefined, "[]")) {
         // await pool.query(`DELETE FROM ${PASSWORD_RESET_TABLE_NAME} WHERE email = $1 AND entry_timestamp < now()`, [email])
-        throw new Error("The verification code expired")
+        throw new ResetTokenExpiredError()
     }
     await pool.query(`DELETE FROM ${PASSWORD_RESET_TABLE_NAME} WHERE email = $1`, [email])
 

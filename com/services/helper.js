@@ -1,6 +1,6 @@
-const pool = require("../db")
+const pool = require("../../setup/db")
 const nodemailer = require("nodemailer")
-const config = require("../config")
+const config = require("../../setup/config")
 
 const grab_all_rows = async (table_name) => {
     return await pool.query(`SELECT * FROM ${table_name}`)
@@ -15,6 +15,8 @@ const create_table_if_not_exists = async (table_creation_query) => {
         await pool.query(table_creation_query)
     } catch (err) {
         console.error("Could not create table")
+        console.error("Here was the table query")
+        console.error(table_creation_query)
         throw err;
     }
 }

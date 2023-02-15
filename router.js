@@ -1,14 +1,53 @@
 const Router = require('express')
 const router = Router()
-const authHandler = require("./handlers/auth")
-const resetPasswordHandler = require("./handlers/reset_password")
+const authHandler = require("./com/handlers/auth")
+const resetPasswordHandler = require("./com/handlers/reset_password")
+const permissionsHandler = require("./com/handlers/permissions")
+const helper = require("./com/services/helper")
 
 router.post("/login", authHandler.login)
 router.post("/signup", authHandler.signup)
 router.get("/verify_account/:id/:code", authHandler.verifyAccount)
+
 router.post("/forget_password", resetPasswordHandler.request_password_reset)
 router.post("/reset_password/:token", resetPasswordHandler.update_after_reset_password)
 router.post("/update_password", resetPasswordHandler.update_password_after_sign_in)
+
+router.post("/permissions/create", permissionsHandler.create_new_permission)
+router.post("/permissions/grant", permissionsHandler.grant_permission)
+router.post("/permissions/revoke", permissionsHandler.revoke_permission)
+router.post("/permissions/check", permissionsHandler.check_permissions)
+router.post("/permissions/check/admin", permissionsHandler.is_admin)
+
+router.get("/grab-all-rows/:table_name", async (req, res) => {
+  try {
+    const tableName = req.params.table_name
+    const data = await helper.grab_all_rows(tableName)
+    return res.json({rows: data.rows, data: data})
+  } catch (err) {
+    return res.json({error: err})
+  }
+})
+router.post("/drop-table/:table_name", async (req, res) => {
+  try {
+    const tableName = req.params.table_name
+    const data = await helper.drop_table(tableName)
+    return res.json({message: "done!"})
+
+  } catch (err) {
+    return res.json({error: err})
+  }
+})
+router.post("/delete-all-rows/:table_name", async (req, res) => {
+  try {
+    const tableName = req.params.table_name
+    const data = await helper.delete_all_rows(tableName)
+    return res.json({message: "done!"})
+
+  } catch (err) {
+    return res.json({error: err})
+  }
+})
 
 
 router.get("/", (req, res) => res.type('html').send(html));
